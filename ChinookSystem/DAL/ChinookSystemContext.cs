@@ -22,4 +22,3 @@ namespace ChinookSystem.DAL
         public DbSet<Track> Tracks { get; set; }
     }
 }
-}
