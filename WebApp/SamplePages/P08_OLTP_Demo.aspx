@@ -10,7 +10,8 @@
     <div class="row">
         <div class="col-sm-2">
             <asp:Label ID="Label1" runat="server" Text="Artist" ></asp:Label>&nbsp;&nbsp;
-            <asp:TextBox ID="ArtistName" runat="server" placeholder="artist name" Width="100"></asp:TextBox>
+            <asp:TextBox ID="ArtistName" runat="server" placeholder="artist name" 
+                AutoPostBack="False" Width="100"></asp:TextBox>
             <asp:Button ID="ArtistFetch" runat="server" Text="Fetch" 
                 OnCommand="Tracks_Button_Command" CommandName="Artist"/><br /><br />
 
@@ -33,23 +34,41 @@
                 OnCommand="Tracks_Button_Command" CommandName="Genre" /><br /><br />
 
             <asp:Label ID="Label4" runat="server" Text="Album"></asp:Label>
-            <asp:TextBox ID="AlbumTitle" runat="server" placeholder="album title" Width="100"></asp:TextBox>
+            <asp:TextBox ID="AlbumTitle" runat="server" placeholder="album title" 
+                AutoPostBack="False" Width="100"></asp:TextBox>
             <asp:Button ID="AlbumFetch" runat="server" Text="Fetch" 
                 OnCommand="Tracks_Button_Command" CommandName="Album" /><br /><br />
 
-            <%--<asp:Label ID="Label5" runat="server" Text="Existing Playlist"></asp:Label>
-            <asp:DropDownList ID="ExistingPlayListDDL" runat="server" Width="100"
-                DataSourceID="ExistingPlayListDDLODS" 
-                DataTextField="DisplayText" 
-                DataValueField="IDValueField">
-            </asp:DropDownList>
-            <asp:Button ID="ExistingPlayListButton" runat="server" Text="Fetch" 
-                OnCommand="PlayList_Button_Command" CommandName="Existing" /><br /><br />
+            <fieldset>
+                <legend>User Playlists
+                </legend>
+                <asp:Label ID="Label7" runat="server" Text="User Name"></asp:Label>
+                <asp:TextBox ID="TextBoxUserName" runat="server" Width="100"
+                    Text="RobbinLaw" AutoPostBack="True" OnTextChanged="CheckForValidUserName"></asp:TextBox>
+                <br />
+                <br />
 
-            <asp:Label ID="Label6" runat="server" Text="New Playlist"></asp:Label>
-            <asp:TextBox ID="NewPlayListName" runat="server" Width="100"></asp:TextBox>
-            <asp:Button ID="NewPlayListButton" runat="server" Text="New" 
-                OnCommand="PlayList_Button_Command" CommandName="New" /><br /><br />--%>
+                <asp:Label ID="Label5" runat="server" Text="Existing Playlist"></asp:Label>
+                <asp:DropDownList ID="ExistingPlayListDDL" runat="server" Width="100"
+                    DataSourceID="ExistingPlayListDDLODS"
+                    DataTextField="DisplayText"
+                    DataValueField="IDValueField">
+                </asp:DropDownList>
+                <asp:Button ID="ExistingPlayListButton" runat="server" Text="Fetch"
+                    OnCommand="PlayList_Buttons_Command" CommandName="Existing" /><br />
+                <br />
+
+                <asp:Label ID="Label6" runat="server" Text="New Playlist"></asp:Label>
+                <asp:TextBox ID="NewPlayListName" runat="server" Width="100"
+                    AutoPostBack="False"></asp:TextBox>
+                <asp:Button ID="NewPlayListButton" runat="server" Text="New"
+                    OnCommand="PlayList_Buttons_Command" CommandName="New" /><br />
+                <br />
+                <asp:Button ID="ButtonSavePlayList" runat="server" Text="Save PlayList"
+                    OnCommand="PlayList_Buttons_Command" CommandName="Save" /><br />
+                <br />
+            </fieldset>
+
         </div>
         <div class="col-sm-10">
             <asp:Panel ID="QueryPanel" runat="server" Visible="true">
@@ -240,12 +259,17 @@
         TypeName="ChinookSystem.BLL.GenreController"
          OnSelected="CheckForException">
     </asp:ObjectDataSource>
-    <%--<asp:ObjectDataSource ID="ExistingPlayListDDLODS" runat="server" 
-        OldValuesParameterFormatString="original_{0}" 
-        SelectMethod="List_PlayListNames" 
+    <asp:ObjectDataSource ID="ExistingPlayListDDLODS" runat="server"
+        OldValuesParameterFormatString="original_{0}"
+        SelectMethod="GetPlayListForDDLByUserName"
         TypeName="ChinookSystem.BLL.PlayListController"
-         OnSelected="CheckForException">
-    </asp:ObjectDataSource>--%>
+        OnSelected="CheckForException">
+        <SelectParameters>
+            <asp:ControlParameter ControlID="TextBoxUserName"
+                PropertyName="Text" DefaultValue="none"
+                Name="userName" Type="String"></asp:ControlParameter>
+        </SelectParameters>
+    </asp:ObjectDataSource>
     <asp:ObjectDataSource ID="TracksSelectionListODS" runat="server" 
         OldValuesParameterFormatString="original_{0}" 
         SelectMethod="List_TracksForPlaylistSelection" 
