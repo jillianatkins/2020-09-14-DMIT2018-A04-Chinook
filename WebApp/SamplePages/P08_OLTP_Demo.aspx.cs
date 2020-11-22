@@ -7,6 +7,7 @@ using System.Web.UI.WebControls;
 
 #region Additional Namespaces
 using System.ComponentModel;
+using ChinookSystem.BLL;
 using ChinookSystem.DAL;
 using ChinookSystem.VIEWMODELS;
 using ChinookSystem.ENTITIES;
@@ -18,8 +19,35 @@ namespace WebApp.SamplePages
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            ArtistName.Attributes.Add("onkeydown", "return (event.keyCode!=13);");
+            AlbumTitle.Attributes.Add("onkeydown", "return (event.keyCode!=13);");
+            TextBoxUserName.Attributes.Add("onkeydown", "return (event.keyCode!=13);");
+            NewPlayListName.Attributes.Add("onkeydown", "return (event.keyCode!=13);");
         }
+
+        #region UserNameCheck
+        protected void CheckForValidUserName(object sender, EventArgs e)
+        {
+            var userNameIsValid = UserNameCheck();
+            if (userNameIsValid == false)
+            {
+                MessageUserControl.ShowInfo("", "ERROR: User Name is NOT VALID");
+                MyPlayList.DataSource = null;
+                MyPlayList.DataBind();
+            }
+            else
+            {
+                ExistingPlayListDDL.DataBind();
+            }
+        }
+
+        private bool UserNameCheck()
+        {
+            PlayListController sysmgr = new PlayListController();
+            var userNameIsValid = sysmgr.UserNameIsValid(TextBoxUserName.Text);
+            return userNameIsValid;
+        }
+        #endregion
 
         #region TrackList Item Command and Building of the GridView
         protected void Tracks_Button_Command(Object sender, System.Web.UI.WebControls.CommandEventArgs e)
@@ -47,10 +75,6 @@ namespace WebApp.SamplePages
                     break;
             }
             TracksSelectionList.DataBind();
-        }
-
-        protected void PlayList_Button_Command(Object sender, System.Web.UI.WebControls.CommandEventArgs e)
-        {
         }
 
         protected void TracksSelectionList_ItemCommand(object sender, ListViewCommandEventArgs e)
@@ -96,6 +120,62 @@ namespace WebApp.SamplePages
                 trackNumber++;
             }
             return list;
+        }
+        #endregion
+
+        #region PlayList Item Command
+        protected void PlayList_Buttons_Command(Object sender, System.Web.UI.WebControls.CommandEventArgs e)
+        {
+            var userNameIsValid = UserNameCheck();
+            if (userNameIsValid == false)
+            {
+                MessageUserControl.ShowInfo("", "ERROR: (PlayList_Buttons) User Name is NOT VALID");
+            }
+            else
+            {
+                switch (e.CommandName)
+                {
+                    case ("Existing"):
+                        //how do we do error handling using MessageUserControl if the
+                        //   code executing is NOT part of an ODS
+                        //you could use Try/Catch (BUT WE WON'T)
+                        //if you examine the source code of MessageUserControl, you will
+                        //  find embedded within the code the Try/Catch
+                        //the syntax:
+                        //  MessageUserControl.TryRun( () => {coding block});
+                        //  MessageUserControl.TryRun( () => {coding block},"success title","successmessage");
+                        MessageUserControl.TryRun(() => {
+                            PlayListController sysmgr = new PlayListController();
+                            List<UserPlayListTrack> info = sysmgr.ListExistingPlayList
+                                (ExistingPlayListDDL.SelectedValue);
+                            MyPlayList.DataSource = info;
+                            MyPlayList.DataBind();
+                        }, "", "SUCCESS: PlayList Retrieved");
+                        break;
+                    case ("New"):
+                        if (string.IsNullOrEmpty(NewPlayListName.Text))
+                            MessageUserControl.ShowInfo("", "ERROR: Give a new PlayList name.");
+                        else
+                        {
+                            MessageUserControl.TryRun(() => {
+                                PlayListController sysmgr = new PlayListController();
+                                int id = sysmgr.AddNewPLaylist(NewPlayListName.Text, TextBoxUserName.Text);
+                                ExistingPlayListDDL.DataBind();
+                                ExistingPlayListDDL.SelectedValue = id.ToString();
+                                MyPlayList.DataSource = null;
+                                MyPlayList.DataBind();
+                            }, "", "SUCCESS: New PlayList Added");
+                        }
+                        break;
+                    case ("Save"):
+                        var playListItems = GetPlayListItemsFromGridView();
+                        MessageUserControl.TryRun(() => {
+                            PlayListController sysmgr = new PlayListController();
+                            sysmgr.SavePlayList(ExistingPlayListDDL.SelectedValue.ToInt(), playListItems);
+                        }, "", "SUCCESS: PlayList Saved");
+                        break;
+                }
+            }
         }
         #endregion
 
@@ -155,6 +235,8 @@ namespace WebApp.SamplePages
             }
         }
         #endregion
+
+        
 
         #region Error Handling
         protected void CheckForException(object sender, ObjectDataSourceStatusEventArgs e)

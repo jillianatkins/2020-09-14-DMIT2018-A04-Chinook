@@ -18,6 +18,122 @@ namespace ChinookSystem.BLL
 	[DataObject]
 	public class PlayListController
 	{
+		#region OLTP Demo
+		[DataObjectMethod(DataObjectMethodType.Select, false)]
+		public bool UserNameIsValid(string playlistusername)
+		{
+			using (var context = new ChinookSystemContext())
+			{
+				Playlist exists = (from x in context.Playlists
+								   where x.UserName.Equals(playlistusername)
+								   select x).FirstOrDefault();
+				if (exists == null)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
+		}
+
+
+
+		[DataObjectMethod(DataObjectMethodType.Select, false)]
+		public List<UserPlayListTrack> ListExistingPlayList(string existingPlayListID)
+		{
+			using (var context = new ChinookSystemContext())
+			{
+				IEnumerable<UserPlayListTrack> results = null;
+				if (existingPlayListID != "")
+				{
+					int narg = int.Parse(existingPlayListID);
+					results = from x in context.PlaylistTracks
+							  where x.PlaylistId == narg
+							  orderby x.TrackNumber
+							  select new UserPlayListTrack
+							  {
+								  TrackID = x.Track.TrackId,
+								  TrackNumber = x.TrackNumber,
+								  TrackName = x.Track.Name,
+								  Milliseconds = x.Track.Milliseconds,
+								  UnitPrice = x.Track.UnitPrice
+							  };
+					return results.ToList();
+				}
+				else
+				{
+					return null;
+				}
+			}
+		}
+
+		[DataObjectMethod(DataObjectMethodType.Select, false)]
+		public List<SelectionList> GetPlayListForDDLByUserName(string userName)
+		{
+			using (var context = new ChinookSystemContext())
+			{
+				//var userName = "RobbinLaw";
+				var results = from x in context.Playlists
+							  where x.UserName == userName
+							  select new SelectionList
+							  {
+								  IDValueField = x.PlaylistId,
+								  DisplayText = x.Name
+							  };
+				return results.ToList();
+			}
+		}
+
+		public int AddNewPLaylist(string playlistname, string username)
+		{
+			using (var context = new ChinookSystemContext())
+			{
+				Playlist exists = (from x in context.Playlists
+								   where x.Name.Equals(playlistname)
+									&& x.UserName.Equals(username)
+								   select x).FirstOrDefault();
+				if (exists == null)
+				{
+					exists = new Playlist()
+					{
+						//pkey is an identity int key
+						Name = playlistname,
+						UserName = username
+					};
+					context.Playlists.Add(exists);
+					context.SaveChanges();
+					return exists.PlaylistId;
+				}
+				else
+				{
+					throw new Exception("ERROR: PlayList Already Exists for this User");
+				}
+			}
+		}
+		public void SavePlayList(int playlistid, List<UserPlayListTrack> playlist)
+		{
+			using (var context = new ChinookSystemContext())
+			{
+				throw new Exception("MESSAGE: SavePlayList with playlistid=" + playlistid
+					+ " and first trackid=" + playlist[0].TrackID
+					);
+
+				//foreach (var track in playList)
+				//{
+				//	PlaylistTrack results2 = (from x in context.PlaylistTracks
+				//							  where x.PlaylistId == playlistid
+				//							  && x.TrackId == track.TrackID
+				//							  orderby x.TrackNumber
+				//							  select x).FirstOrDefault();
+				//}
+
+			}
+		}
+		#endregion
+
+		#region Repeater Demo Query
 		[DataObjectMethod(DataObjectMethodType.Select, false)]
 		public List<PlayListItem> PlayList_GetPlayListOfSize(int lowestplaylistsize)
 		{
@@ -42,5 +158,6 @@ namespace ChinookSystem.BLL
 				return results.ToList();
 			}
 		}
-	}
+        #endregion
+    }
 }
